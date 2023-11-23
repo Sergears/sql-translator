@@ -1,16 +1,22 @@
 import streamlit as st
 import requests
 import time
+import typing
+from typing import List
 
-model_id = "juierror/text-to-sql-with-table-schema"
+model_id = "sergears/sql-translator"
 api_token = st.secrets["HUGGING_FACE_API_KEY"]
 
-def prepare_input(question, table):
-    table_prefix = "table:"
-    question_prefix = "question:"
-    join_table = ",".join(table)
-    inputs = f"{question_prefix} {question} {table_prefix} {join_table}"
-    return inputs
+def make_input_string(question: str, table_columns: List[str]) -> str:
+    """
+    Helper function to combine natural language question with table column names, and add prefixes
+    """
+
+    question_prefix = "Translate English to SQL: "
+    table_prefix = ". Table column names: "
+    question_input = question_prefix + question
+    table_input = table_prefix + ', '.join(table_columns)
+    return question_input + table_prefix
 
 def query(payload, model_id, api_token):
     headers = {"Authorization": f"Bearer {api_token}"}
@@ -99,7 +105,7 @@ st.divider()
 # Button to trigger translation
 if st.button("Translate to SQL"):
     if question_text:
-        input_data = prepare_input(question=question_text, table=st.session_state.fields)
+        input_data = make_input_string(question=question_text, table=st.session_state.fields)
         translate_and_show_result(input_data)
     else:
         st.warning("Please enter at least the question.")
